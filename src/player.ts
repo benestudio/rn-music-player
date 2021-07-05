@@ -1,5 +1,13 @@
 import { useRef, useState } from "react";
 import Sound from "react-native-sound";
+import { Platform, NativeModules } from "react-native";
+
+const { PianoPlayerModule } = NativeModules;
+
+if (Platform.OS === "android") {
+    PianoPlayerModule.init();
+    PianoPlayerModule.loadSounds();
+}
 
 const fadeOutSound = (note: Sound, volume = 10) => {
     if (volume > 0) {
@@ -22,7 +30,18 @@ const player = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const timeouts = useRef<ReturnType<typeof setTimeout>[]>([]).current;
 
-    const play = async (notes: number[][], tempo = 180) => {
+    const play = async (notes: number[][], tempo =120) => {
+        if (Platform.OS === "android") {
+            console.log(notes.map(note => ({
+                notes: note,
+            })));
+            PianoPlayerModule.play(notes.map(note => ({
+                notes: note,
+            })), tempo, () => {
+                console.log("ended")
+            });
+            return;
+        }
         const promises = notes.map((beat, beatIndex) => {
             return new Promise<SoundSchedule[]>((resolve) => {
                 const totalNotes = beat.length;
@@ -68,7 +87,7 @@ const player = () => {
         const stopTimeout = setTimeout(stop, notes.length * (60 / tempo) * 1000);
         timeouts.push(stopTimeout);
     };
-    
+
     const stop = () => {
         timeouts.forEach(timeout => {
             clearTimeout(timeout);
