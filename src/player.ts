@@ -42,7 +42,7 @@ const player = () => {
             PianoPlayerModule.play(notes.map(note => ({
                 notes: note,
             })), tempo, () => {
-                setIsPlaying(false);
+                stop();
             });
             setIsPlaying(true);
             return;
