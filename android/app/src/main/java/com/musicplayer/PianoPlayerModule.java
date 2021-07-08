@@ -49,6 +49,8 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
   public PianoPlayerModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
+    initializeSoundPool();
+    loadSounds();
   }
 
   private void initializeSoundPool() {
@@ -77,16 +79,14 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
       .emit(eventName, params);
   }
 
-  @ReactMethod
-  public void loadSounds(Promise promise) {
-    for (Integer i = 0; i <= 14; i++) {
-      String identifier = "piano" + i.toString();
+  private void loadSounds() {
+    for (int i = 0; i <= 14; i++) {
+      String identifier = "piano" + i;
       int sound =
         this.reactContext.getResources()
           .getIdentifier(identifier, "raw", this.reactContext.getPackageName());
       soundIds.put(identifier, soundPool.load(this.reactContext, sound, 1));
     }
-    promise.resolve(true);
   }
 
   private Runnable playSound(
@@ -98,8 +98,8 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
       public void run() {
         sendEvent(reactContext, "noteChange", streamId);
         for (int i = 0; i < pianoNotes.size(); i++) {
-            Integer pianoNote = pianoNotes.getInt(i);
-            Integer soundId = soundIds.get("piano" + pianoNote);
+            int pianoNote = pianoNotes.getInt(i);
+            int soundId = soundIds.get("piano" + pianoNote);
             int stream = soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f);
             streamIds.put(streamId + i * 10000, stream);
         }
@@ -133,13 +133,6 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void init() {
-    if (soundPool == null) {
-      initializeSoundPool();
-    }
-  }
-
-  @ReactMethod
   public void play(ReadableArray notes, Integer tempo, Callback onEnd) {
     executor.setRemoveOnCancelPolicy(true);
     streamIds = new HashMap<Integer, Integer>();
@@ -149,23 +142,21 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
       ReadableMap note = notes.getMap(i);
       ReadableArray pianoNotes = note.getArray("notes");
       float time = i * noteDuration;
-      Integer timeInt = (int)time;
       ScheduledFuture noteStart = executor.schedule(
         playSound(
           pianoNotes,
           i
         ),
-        timeInt,
+        (int)time,
         TimeUnit.MILLISECONDS
       );
       float endTime = time + noteDuration + 100;
-      Integer endTimeInt = (int)endTime;
       ScheduledFuture noteEnd = executor.schedule(
         stopSound(
           pianoNotes,
           i
         ),
-        endTimeInt,
+        (int)endTime,
         TimeUnit.MILLISECONDS
       );
       scheduledFutures[i * 2] = noteStart;
@@ -174,10 +165,9 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
 
 
     float trackEndTime = noteDuration * notes.size();
-    Integer trackEndTimeInteger = (int)trackEndTime;
     ScheduledFuture playEnd = executor.schedule(
       endPlaying(onEnd),
-      trackEndTimeInteger,
+      (int)trackEndTime,
       TimeUnit.MILLISECONDS
     );
     scheduledFutures[notes.size() * 2 + 1] = playEnd;

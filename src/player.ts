@@ -8,8 +8,6 @@ let eventEmitter: NativeEventEmitter;
 
 if (Platform.OS === "android") {
     eventEmitter = new NativeEventEmitter(PianoPlayerModule);;
-    PianoPlayerModule.init();
-    PianoPlayerModule.loadSounds();
 }
 
 const fadeOutSound = (note: Sound, volume = 10) => {
