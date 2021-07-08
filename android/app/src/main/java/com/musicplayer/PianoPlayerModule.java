@@ -68,29 +68,13 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
   private void sendEvent(
     ReactApplicationContext reactContext,
     String eventName,
-    int voice,
-    int bar,
-    int barNote,
-    int num
+    int i
   ) {
     WritableMap params = Arguments.createMap();
-    params.putInt("num", num);
-    params.putInt("voice", voice);
-    params.putInt("bar", bar);
-    params.putInt("barNote", barNote);
+    params.putInt("num", i);
     reactContext
       .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
       .emit(eventName, params);
-  }
-
-  private String getNoteName(String noteName) {
-    switch (noteName) {
-      case "piano":
-      case "slap":
-        return noteName;
-      default:
-        return "piano" + noteName;
-    }
   }
 
   @ReactMethod
@@ -112,42 +96,41 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
     return new Runnable() {
       @Override
       public void run() {
-        // if (scoreScroll != null) {
-        //   sendEvent(reactContext, "noteChange", voice, bar, barNote, num);
-        // }
+        sendEvent(reactContext, "noteChange", streamId);
         for (int i = 0; i < pianoNotes.size(); i++) {
             Integer pianoNote = pianoNotes.getInt(i);
             Integer soundId = soundIds.get("piano" + pianoNote);
             int stream = soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f);
-            streamIds.put(streamId, stream);
+            streamIds.put(streamId + i * 10000, stream);
         }
-        // if (barNote == 0 && scoreScroll != null) {
-        //   scoreScroll.smoothScrollTo(0, scrollTo);
-        // }
       }
     };
   }
 
-  // private Runnable stopSound(int streamId) {
-  //   return new Runnable() {
-  //     @Override
-  //     public void run() {
-  //       soundPool.stop(streamIds.get(streamId));
-  //       soundPool.stop(streamIds.get(streamId + 10000));
-  //       soundPool.stop(streamIds.get(streamId + 20000));
-  //       streamIds.remove(streamId);
-  //     }
-  //   };
-  // }
-  //
-  // private Runnable endPlaying(Callback callback) {
-  //   return new Runnable() {
-  //     @Override
-  //     public void run() {
-  //       callback.invoke();
-  //     }
-  //   };
-  // }
+  private Runnable stopSound(
+    ReadableArray pianoNotes,
+    int streamId
+  ) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        for (int i = 0; i < pianoNotes.size(); i++) {
+          soundPool.stop(streamIds.get(streamId + i * 10000));
+          streamIds.remove(streamId + i * 10000);
+        }
+
+      }
+    };
+  }
+  
+  private Runnable endPlaying(Callback callback) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        callback.invoke();
+      }
+    };
+  }
 
   @ReactMethod
   public void init() {
@@ -158,19 +141,14 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void play(ReadableArray notes, Integer tempo, Callback onEnd) {
-    // ScrollView scoreScroll = null;
-    // if (nativeTag != -1) {
-    //   scoreScroll = (ScrollView) getCurrentActivity()
-    //     .findViewById(nativeTag);
-    // }
     executor.setRemoveOnCancelPolicy(true);
     streamIds = new HashMap<Integer, Integer>();
-    scheduledFutures = new ScheduledFuture[notes.size() * 2];
+    scheduledFutures = new ScheduledFuture[notes.size() * 2 + 2];
+    float noteDuration = 60.0f / tempo * 1000;
     for (int i = 0; i < notes.size(); i++) {
-      // ReadableType type = notes.getType(i);
       ReadableMap note = notes.getMap(i);
       ReadableArray pianoNotes = note.getArray("notes");
-      float time = i * (60.0f / tempo * 1000);
+      float time = i * noteDuration;
       Integer timeInt = (int)time;
       ScheduledFuture noteStart = executor.schedule(
         playSound(
@@ -180,34 +158,38 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
         timeInt,
         TimeUnit.MILLISECONDS
       );
-      // Log.v("time", time.toString());
-      // if (pianoNote != "rest") {
-      //   ScheduledFuture noteEnd = executor.schedule(
-      //     stopSound(notes.size() * voice + i),
-      //     time + duration,
-      //     TimeUnit.MILLISECONDS
-      //   );
-      //   scheduledFutures[i * 2 + 1] = noteEnd;
-      // }
-      // scheduledFutures[i * 2] = noteStart;
-      // if (i == notes.size() - 1) {
-      //   stopTime = time + duration;
-      // }
+      float endTime = time + noteDuration + 100;
+      Integer endTimeInt = (int)endTime;
+      ScheduledFuture noteEnd = executor.schedule(
+        stopSound(
+          pianoNotes,
+          i
+        ),
+        endTimeInt,
+        TimeUnit.MILLISECONDS
+      );
+      scheduledFutures[i * 2] = noteStart;
+      scheduledFutures[i * 2 + 1] = noteEnd;
     }
 
-    // ScheduledFuture playEnd = executor.schedule(
-    //   endPlaying(onEnd),
-    //   stopTime,
-    //   TimeUnit.MILLISECONDS
-    // );
-    // scheduledFutures[notes.size()] = playEnd;
+
+    float trackEndTime = noteDuration * notes.size();
+    Integer trackEndTimeInteger = (int)trackEndTime;
+    ScheduledFuture playEnd = executor.schedule(
+      endPlaying(onEnd),
+      trackEndTimeInteger,
+      TimeUnit.MILLISECONDS
+    );
+    scheduledFutures[notes.size() * 2 + 1] = playEnd;
   }
 
   @ReactMethod
   public void stop() {
     if (soundPool != null) {
       for (int i = 0; i < scheduledFutures.length; i++) {
-        scheduledFutures[i].cancel(false);
+        if (scheduledFutures[i] != null) {
+          scheduledFutures[i].cancel(false);
+        }
       }
       Iterator it = streamIds.entrySet().iterator();
       while (it.hasNext()) {

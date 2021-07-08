@@ -1,10 +1,13 @@
 import { useRef, useState } from "react";
 import Sound from "react-native-sound";
-import { Platform, NativeModules } from "react-native";
+import { Platform, NativeModules, NativeEventEmitter, EmitterSubscription } from "react-native";
 
 const { PianoPlayerModule } = NativeModules;
 
+let eventEmitter: NativeEventEmitter;
+
 if (Platform.OS === "android") {
+    eventEmitter = new NativeEventEmitter(PianoPlayerModule);;
     PianoPlayerModule.init();
     PianoPlayerModule.loadSounds();
 }
@@ -29,17 +32,19 @@ const player = () => {
     const [playingNote, setPlayingNote] = useState(-1);
     const [isPlaying, setIsPlaying] = useState(false);
     const timeouts = useRef<ReturnType<typeof setTimeout>[]>([]).current;
+    const eventListener = useRef<EmitterSubscription | null>(null);
 
     const play = async (notes: number[][], tempo =120) => {
         if (Platform.OS === "android") {
-            console.log(notes.map(note => ({
-                notes: note,
-            })));
+            eventListener.current = eventEmitter.addListener('noteChange', ({ num }) => {
+                setPlayingNote(num);
+            });
             PianoPlayerModule.play(notes.map(note => ({
                 notes: note,
             })), tempo, () => {
-                console.log("ended")
+                setIsPlaying(false);
             });
+            setIsPlaying(true);
             return;
         }
         const promises = notes.map((beat, beatIndex) => {
@@ -89,12 +94,19 @@ const player = () => {
     };
 
     const stop = () => {
-        timeouts.forEach(timeout => {
-            clearTimeout(timeout);
-        });
-        timeouts.length = 0;
-        setPlayingNote(-1);
-        setIsPlaying(false);
+        if (Platform.OS === "android") {
+            eventListener.current!.remove();
+            PianoPlayerModule.stop();
+            setIsPlaying(false);
+            setPlayingNote(-1);
+        } else {
+            timeouts.forEach(timeout => {
+                clearTimeout(timeout);
+            });
+            timeouts.length = 0;
+            setPlayingNote(-1);
+            setIsPlaying(false);
+        }
     };
 
     const playPitch = (pitchIndex: number) => {
