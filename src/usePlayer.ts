@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+
 import * as PianoPlayer from './PianoPlayer';
 
 const usePlayer = () => {
@@ -23,9 +24,7 @@ const usePlayer = () => {
     setPlayingNote(null);
   };
 
-  const playPitch = (pitchIndex: number) => {
-    play([[pitchIndex]]);
-  };
+  const playPitch = (pitchIndex: number) => PianoPlayer.play([[pitchIndex]]);
 
   return {playingNote, isPlaying, playPitch, play, stop};
 };

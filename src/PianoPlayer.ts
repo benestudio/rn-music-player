@@ -4,7 +4,7 @@ import {
   EmitterSubscription,
 } from 'react-native';
 
-export type OnNoteChangeListener = (num: number) => void;
+type OnNoteChangeListener = (num: number) => void;
 
 const {PianoPlayerModule} = NativeModules;
 const eventEmitter = new NativeEventEmitter(PianoPlayerModule);
