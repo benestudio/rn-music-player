@@ -16,7 +16,6 @@
     "react-native-reanimated": "^2.2.0",
     "react-native-safe-area": "^0.5.1",
     "react-native-safe-area-context": "^3.2.0",
-    "react-native-sound": "^0.11.0",
     "uninstall": "*"
   },
   "devDependencies": {

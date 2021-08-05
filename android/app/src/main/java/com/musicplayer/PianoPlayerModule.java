@@ -36,51 +36,6 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
         return "PianoPlayerModule";
     }
 
-    private void initializeSoundPool() {
-        AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build();
-
-        soundPool = new SoundPool.Builder()
-                .setMaxStreams(15)
-                .setAudioAttributes(audioAttributes)
-                .build();
-    }
-
-    private void sendOnNoteChangeEvent(int beat) {
-        WritableMap params = Arguments.createMap();
-        params.putInt("num", beat);
-        getReactApplicationContext()
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit("noteChange", params);
-    }
-
-    private void loadSounds() {
-        for (int i = 0; i <= 14; i++) {
-            String identifier = "piano" + i;
-            int sound = getReactApplicationContext().getResources()
-                    .getIdentifier(identifier, "raw", getReactApplicationContext().getPackageName());
-            soundIds.put(identifier, soundPool.load(getReactApplicationContext(), sound, 1));
-        }
-    }
-
-    private void playSound(ReadableArray pianoNotes, int streamId) {
-        sendOnNoteChangeEvent(streamId);
-        for (int i = 0; i < pianoNotes.size(); i++) {
-            int pianoNote = pianoNotes.getInt(i);
-            int soundId = soundIds.get("piano" + pianoNote);
-            int stream = soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f);
-            streamIds.put(streamId + i * 10000, stream);
-        }
-    }
-
-    private void stopSound(ReadableArray pianoNotes, int streamId) {
-        for (int i = 0; i < pianoNotes.size(); i++) {
-            soundPool.stop(streamIds.get(streamId + i * 10000));
-            streamIds.remove(streamId + i * 10000);
-        }
-    }
-
     @ReactMethod
     public void play(ReadableArray beats, double tempo, Promise promise) {
         stop();
@@ -106,5 +61,50 @@ public class PianoPlayerModule extends ReactContextBaseJavaModule {
             }
         }
         streamIds.clear();
+    }
+
+    private void initializeSoundPool() {
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+
+        soundPool = new SoundPool.Builder()
+                .setMaxStreams(15)
+                .setAudioAttributes(audioAttributes)
+                .build();
+    }
+
+    private void loadSounds() {
+        for (int i = 0; i <= 14; i++) {
+            String identifier = "piano" + i;
+            int sound = getReactApplicationContext().getResources()
+                    .getIdentifier(identifier, "raw", getReactApplicationContext().getPackageName());
+            soundIds.put(identifier, soundPool.load(getReactApplicationContext(), sound, 1));
+        }
+    }
+
+    private void sendOnNoteChangeEvent(int beat) {
+        WritableMap params = Arguments.createMap();
+        params.putInt("num", beat);
+        getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("noteChange", params);
+    }
+
+    private void playSound(ReadableArray pianoNotes, int streamId) {
+        sendOnNoteChangeEvent(streamId);
+        for (int i = 0; i < pianoNotes.size(); i++) {
+            int pianoNote = pianoNotes.getInt(i);
+            int soundId = soundIds.get("piano" + pianoNote);
+            int stream = soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f);
+            streamIds.put(streamId + i * 10000, stream);
+        }
+    }
+
+    private void stopSound(ReadableArray pianoNotes, int streamId) {
+        for (int i = 0; i < pianoNotes.size(); i++) {
+            soundPool.stop(streamIds.get(streamId + i * 10000));
+            streamIds.remove(streamId + i * 10000);
+        }
     }
 }
