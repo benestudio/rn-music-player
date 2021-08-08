@@ -1,9 +1,11 @@
 import React from 'react';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Player from './components/Player';
 
 const App = () => (
   <SafeAreaProvider>
+    <StatusBar hidden />
     <Player />
   </SafeAreaProvider>
 );

@@ -6,13 +6,13 @@ import {
 
 type OnNoteChangeListener = (num: number) => void;
 
-const {PianoPlayerModule} = NativeModules;
+const { PianoPlayerModule } = NativeModules;
 const eventEmitter = new NativeEventEmitter(PianoPlayerModule);
 
 let listeners: OnNoteChangeListener[] = [];
 let eventSubscription: EmitterSubscription;
 
-const onNoteChangeListenerInternal = ({num}: {num: number}) => {
+const onNoteChangeListenerInternal = ({ num }: { num: number }) => {
   listeners.forEach(listener => listener(num));
 };
 
