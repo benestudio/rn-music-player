@@ -51,7 +51,7 @@ class PianoPlayer {
   
   func scheduleNotes(notes: [Int], noteDuration: Double, beat: Int) {
     let startTime = Double(beat) * noteDuration
-    let endTime = startTime + noteDuration;
+    let endTime = startTime + noteDuration + 0.1
     DispatchQueue.main.async { [weak self] in
       let startTimer = Timer.scheduledTimer(withTimeInterval: startTime, repeats: false) { [weak self] _ in
         self?.playNotes(notes: notes, beat: beat)

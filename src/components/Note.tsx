@@ -1,7 +1,7 @@
 import React from 'react';
-import {Pressable} from 'react-native';
+import { Pressable } from 'react-native';
 
-import {BEATS_PER_BAR} from '../constants';
+import { BEATS_PER_BAR, noteColors } from '../constants';
 import styles from './styles';
 
 interface NoteProps {
@@ -12,6 +12,7 @@ interface NoteProps {
   barIndex: number;
   beatIndex: number;
   pitchIndex: number;
+  colorIndex: number;
 }
 
 const Note = ({
@@ -22,6 +23,7 @@ const Note = ({
   barIndex,
   beatIndex,
   pitchIndex,
+  colorIndex,
 }: NoteProps) => {
   const isSelected = notes[barIndex][beatIndex].includes(pitchIndex);
   const isCurrentBeat =
@@ -31,9 +33,17 @@ const Note = ({
       onPress={() => onPress(barIndex, beatIndex, pitchIndex)}
       style={[
         styles.pitch,
-        isSelected ? styles.selectedPitch : null,
+        isSelected
+          ? {
+              backgroundColor: noteColors.selected[colorIndex],
+            }
+          : null,
         isCurrentBeat ? styles.playingPitch : null,
-        isSelected && isCurrentBeat ? styles.playingSelectedPitch : null,
+        isSelected && isCurrentBeat
+          ? {
+              backgroundColor: noteColors.played[colorIndex],
+            }
+          : null,
       ]}
     />
   );

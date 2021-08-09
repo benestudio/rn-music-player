@@ -1,5 +1,5 @@
-import React, {useCallback, useState} from 'react';
-import {Button, View} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View } from 'react-native';
 import Animated, {
   Easing,
   scrollTo,
@@ -8,7 +8,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import cloneDeep from 'lodash.clonedeep';
 
 import {
@@ -16,15 +16,16 @@ import {
   BEATS_PER_BAR,
   NOTES_IN_OCTAVE,
   TOTAL_OCTAVES,
-  TEMPO,
+  DEFAULT_TEMPO,
 } from '../constants';
 import usePlayer from '../hooks/usePlayer';
 import Note from './Note';
 import styles from './styles';
+import Controllers from './Controllers';
 
 const Player = () => {
   const insets = useSafeAreaInsets();
-
+  const [tempo, setTempo] = useState(DEFAULT_TEMPO);
   const {
     currentBeat,
     isPlaying,
@@ -34,8 +35,8 @@ const Player = () => {
   } = usePlayer();
 
   const [notes, setNotes] = useState<number[][][]>(
-    Array.from({length: TOTAL_BARS}).map(() =>
-      Array.from({length: BEATS_PER_BAR}).map(() => []),
+    Array.from({ length: TOTAL_BARS }).map(() =>
+      Array.from({ length: BEATS_PER_BAR }).map(() => []),
     ),
   );
 
@@ -53,14 +54,14 @@ const Player = () => {
       stopTrack();
     } else {
       const beats = notes.reduce((all, bar) => [...all, ...bar], []);
-      const offset = -2 * (contentWidth / beats.length);
+      const offset = -3 * (contentWidth / beats.length);
       scroll.value = offset;
-      const noteDuration = (60 / TEMPO) * 1000;
+      const noteDuration = (60 / tempo) * 1000;
       scroll.value = withTiming(contentWidth + offset, {
         duration: beats.length * noteDuration,
         easing: Easing.linear,
       });
-      playTrack(beats, TEMPO);
+      playTrack(beats, tempo);
     }
   };
 
@@ -106,28 +107,32 @@ const Player = () => {
           <View style={styles.bar} key={barIndex}>
             {bar.map((_beat, beatIndex) => (
               <View style={styles.beat} key={beatIndex}>
-                {Array.from({length: NOTES_IN_OCTAVE * TOTAL_OCTAVES + 1}).map(
-                  (_pitch, pitchIndex) => (
-                    <Note
-                      key={pitchIndex}
-                      onPress={handleToggleNote}
-                      barIndex={barIndex}
-                      beatIndex={beatIndex}
-                      pitchIndex={pitchIndex}
-                      notes={notes}
-                      isPlaying={isPlaying}
-                      currentBeat={currentBeat}
-                    />
-                  ),
-                )}
+                {Array.from({
+                  length: NOTES_IN_OCTAVE * TOTAL_OCTAVES + 1,
+                }).map((_pitch, pitchIndex) => (
+                  <Note
+                    key={pitchIndex}
+                    onPress={handleToggleNote}
+                    barIndex={barIndex}
+                    beatIndex={beatIndex}
+                    pitchIndex={pitchIndex}
+                    notes={notes}
+                    isPlaying={isPlaying}
+                    currentBeat={currentBeat}
+                    colorIndex={pitchIndex % (NOTES_IN_OCTAVE + 1)}
+                  />
+                ))}
               </View>
             ))}
           </View>
         ))}
       </Animated.ScrollView>
-      <View style={styles.tabBar}>
-        <Button title={isPlaying ? 'Stop' : 'Play'} onPress={togglePlayback} />
-      </View>
+      <Controllers
+        isPlaying={isPlaying}
+        togglePlayback={togglePlayback}
+        setTempo={setTempo}
+        tempo={tempo}
+      />
     </View>
   );
 };

@@ -1,6 +1,6 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
+import { DEFAULT_TEMPO } from '../constants';
 
-import {TEMPO} from '../constants';
 import * as PianoPlayer from '../modules/PianoPlayer';
 
 const usePlayer = () => {
@@ -12,7 +12,7 @@ const usePlayer = () => {
     return () => PianoPlayer.removeOnNoteChangeListener(setCurrentBeat);
   }, []);
 
-  const play = async (notes: number[][], tempo = TEMPO) => {
+  const play = async (notes: number[][], tempo = DEFAULT_TEMPO) => {
     setPlaying(true);
     await PianoPlayer.play(notes, tempo);
     setPlaying(false);
@@ -27,7 +27,7 @@ const usePlayer = () => {
 
   const playPitch = (pitchIndex: number) => PianoPlayer.play([[pitchIndex]]);
 
-  return {currentBeat, isPlaying, playPitch, play, stop};
+  return { currentBeat, isPlaying, playPitch, play, stop };
 };
 
 export default usePlayer;

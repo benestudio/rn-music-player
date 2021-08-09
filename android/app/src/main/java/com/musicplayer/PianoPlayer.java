@@ -31,7 +31,7 @@ public class PianoPlayer {
             double delay = i * noteDuration;
             int streamId = i;
             handler.postDelayed(() -> playSound(notes, streamId), (long) delay);
-            handler.postDelayed(() -> stopSound(notes, streamId), (long) (delay + noteDuration));
+            handler.postDelayed(() -> stopSound(notes, streamId), (long) (delay + noteDuration + 100));
         }
         double endTime = noteDuration * beats.size();
         handler.postDelayed(() -> {
