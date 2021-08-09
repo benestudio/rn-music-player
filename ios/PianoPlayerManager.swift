@@ -11,8 +11,9 @@ class PianoPlayerManager : RCTEventEmitter, PianoPlayerDelegate {
       return;
     }
 
-    handleStop = {
+    handleStop = { [weak self] in
       resolve(nil)
+      self?.handleStop = nil
     }
 
     player.play(beats: beats, tempo: Int(truncating: tempo))
