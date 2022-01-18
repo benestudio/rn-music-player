@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_TEMPO } from '../constants';
-
 import * as PianoPlayer from '../modules/PianoPlayer';
 
 const usePlayer = () => {

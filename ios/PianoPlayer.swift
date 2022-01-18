@@ -4,7 +4,7 @@ import AVFoundation
 class PianoPlayer {
   var timers: [Timer] = []
   var sounds: [String: AVAudioPlayer] = [:]
-  var pianoPlayerDelegate: PianoPlayerDelegate?
+  weak var pianoPlayerDelegate: PianoPlayerDelegate?
   
   func play(beats: [[Int]], tempo: Int) {
     stop();
